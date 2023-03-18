@@ -14,16 +14,20 @@ import (
 )
 
 func main() {
+	if _, err := os.Stat("data/"); errors.Is(err, os.ErrNotExist) {
+		os.Mkdir("data", 0755)
+	}
+
 	infoLogger := log.New(os.Stdin, "[INFO]", log.LstdFlags)
 	errLogger := log.New(os.Stderr, "[ERROR]", log.LstdFlags)
 
-	client := mongo.InitClient()
+	mongo.InitClient()
 	defer func() {
-		if err := client.Disconnect(context.Background()); err != nil {
+		if err := mongo.C.Disconnect(context.Background()); err != nil {
 			panic(err)
 		}
 	}()
-	store := mongo.NewUserStore(client)
+	store := mongo.NewUserStore()
 
 	server := http.NewServer(store, infoLogger, errLogger)
 
@@ -38,7 +42,7 @@ func main() {
 	signal.Notify(sigChan, os.Interrupt)
 
 	sig := <-sigChan
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
 	infoLogger.Println("received terminate, graceful shutdown", sig)

@@ -2,35 +2,37 @@ package mongo
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/stovenn/dataimpact/pkg/model"
+	"github.com/stovenn/dataimpact/internal/model"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
-
-type UserStore interface {
-	Create()
-}
 
 type userStore struct {
 	*mongo.Collection
 }
 
-func NewUserStore(client *mongo.Client) *userStore {
-	collection := client.Database("dataimpact").Collection("users")
-	return &userStore{collection}
+func NewUserStore() *userStore {
+	return &userStore{C.Database("dataimpact").Collection("users")}
 }
 
-func (us *userStore) Create() {
-	fmt.Println("create")
-	user := model.User{
-		ID:   "sfdskh23hreef8d7fh",
-		Name: "Sam Lee",
-		Tags: []string{"seasons", "gardening", "flower"},
+func (us *userStore) Create(user *model.User) error {
+	_, err := us.Collection.InsertOne(context.Background(), user)
+	return err
+}
+
+func (us *userStore) FindOne(id string) (*model.User, error) {
+	filter := bson.D{{Key: "_id", Value: id}}
+	result := us.Collection.FindOne(context.Background(), filter)
+	if err := result.Err(); err != nil {
+		return nil, err
 	}
 
-	_, err := us.InsertOne(context.Background(), user)
+	var u model.User
+	err := result.Decode(&u)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
+
+	return &u, nil
 }

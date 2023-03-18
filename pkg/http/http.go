@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/stovenn/dataimpact/pkg/mongo"
+	"github.com/stovenn/dataimpact/internal"
 )
 
 var (
@@ -16,12 +16,12 @@ var (
 type Server struct {
 	infoLogger *log.Logger
 	errLogger  *log.Logger
-	userStore  mongo.UserStore
+	userStore  internal.UserStore
 
 	*http.Server
 }
 
-func NewServer(us mongo.UserStore, infoLogger, errLogger *log.Logger) *Server {
+func NewServer(us internal.UserStore, infoLogger, errLogger *log.Logger) *Server {
 	s := &Server{
 		infoLogger: infoLogger,
 		errLogger:  errLogger,
@@ -44,9 +44,9 @@ func (server *Server) setupRoutes() {
 	userRouter := r.PathPrefix("/users").Subrouter()
 	userRouter.HandleFunc("/", server.HandleCreate).Methods(http.MethodPost)
 	userRouter.HandleFunc("/", nil).Methods(http.MethodGet)
-	userRouter.HandleFunc("/:id", nil).Methods(http.MethodGet)
-	userRouter.HandleFunc("/:id", nil).Methods(http.MethodPut)
-	userRouter.HandleFunc("/:id", nil).Methods(http.MethodDelete)
+	userRouter.HandleFunc("/{id}", server.HandlerGet).Methods(http.MethodGet)
+	userRouter.HandleFunc("/{id}", nil).Methods(http.MethodPut)
+	userRouter.HandleFunc("/{id}", nil).Methods(http.MethodDelete)
 
 	server.Handler = r
 }
