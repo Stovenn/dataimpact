@@ -16,18 +16,22 @@ import (
 
 func main() {
 	util.CreateDataDirIfNotExists()
+	config, err := util.SetupConfig(".")
+	if err != nil {
+		log.Fatalf("cannot load config: %v\n", err)
+	}
 
 	infoLogger := log.New(os.Stdin, "[INFO]", log.LstdFlags)
 	errLogger := log.New(os.Stderr, "[ERROR]", log.LstdFlags)
 
-	mongo.InitMongoStore()
+	mongo.InitMongoStore(config.DBUri, config.DBName)
 	defer func() {
 		if err := mongo.S.Disconnect(context.Background()); err != nil {
 			panic(err)
 		}
 	}()
 
-	server := http.NewServer(mongo.S, infoLogger, errLogger)
+	server := http.NewServer(mongo.S, infoLogger, errLogger, config)
 
 	go func() {
 		fmt.Printf("Server listening on port 8080\n")

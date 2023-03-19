@@ -2,6 +2,7 @@ package mongo
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -17,17 +18,13 @@ type mongoStore struct {
 
 var S *mongoStore
 
-const (
-	uri    = "mongodb://mongoadmin:secret@localhost:27017"
-	dbName = "dataimpact"
-)
-
-func InitMongoStore() {
+func InitMongoStore(uri, dbName string) {
 	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
 	opts := options.Client().ApplyURI(uri).SetServerAPIOptions(serverAPI)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	fmt.Println()
 	client, err := mongo.Connect(ctx, opts)
 	if err != nil {
 		panic(err)

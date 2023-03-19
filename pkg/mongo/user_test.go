@@ -10,8 +10,7 @@ import (
 )
 
 func createUser(t *testing.T) *model.User {
-	name := util.RandomString(10)
-	user := &model.User{ID: util.RandomString(25), Name: &name}
+	user := util.RandomUser()
 	err := testStore.Create(context.Background(), user)
 	if err != nil {
 		t.Errorf("%v", err)

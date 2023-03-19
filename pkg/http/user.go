@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"path"
@@ -21,6 +22,7 @@ func (s *Server) HandleCreate(w http.ResponseWriter, r *http.Request) {
 	file, err := os.Open("DataSet")
 	if err != nil {
 		s.errLogger.Printf("%v", err)
+		handleError(w, http.StatusInternalServerError, err)
 		return
 	}
 	defer file.Close()
@@ -42,6 +44,7 @@ func (s *Server) HandleCreate(w http.ResponseWriter, r *http.Request) {
 			hash, err := bcrypt.HashPassword(*u.Password)
 			if err != nil {
 				s.errLogger.Panicf("%v\n", err)
+				handleError(w, http.StatusInternalServerError, err)
 				return
 			}
 			*user.Password = string(hash)
@@ -49,12 +52,14 @@ func (s *Server) HandleCreate(w http.ResponseWriter, r *http.Request) {
 			err = s.store.Create(ctx, u)
 			if err != nil {
 				s.errLogger.Panicf("%v\n", err)
+				handleError(w, http.StatusInternalServerError, err)
 				return
 			}
 
 			err = writeData(u.ID, *u.Data)
 			if err != nil {
 				s.errLogger.Panicf("%v\n", err)
+				handleError(w, http.StatusInternalServerError, err)
 				return
 			}
 
@@ -70,40 +75,58 @@ func (s *Server) HandleGet(w http.ResponseWriter, r *http.Request) {
 	user, err := s.store.FindOne(context.Background(), userID)
 	if err != nil {
 		s.errLogger.Panicf("%v\n", err)
+		handleError(w, http.StatusInternalServerError, err)
 		return
 	}
 
 	w.Header().Add("Content-type", "application/json")
-	json.NewEncoder(w).Encode(user)
+	json.NewEncoder(w).Encode(model.ToResponse(user))
 }
 
 func (s *Server) HandleList(w http.ResponseWriter, r *http.Request) {
 	users, err := s.store.Find(context.Background())
 	if err != nil {
 		s.errLogger.Panicf("%v\n", err)
+		handleError(w, http.StatusInternalServerError, err)
 		return
 	}
 
+	var userResponse []*model.UserResponse
+	for _, u := range users {
+		fmt.Printf("%+v", u)
+		userResponse = append(userResponse, model.ToResponse(u))
+	}
+
 	w.Header().Add("Content-type", "application/json")
-	json.NewEncoder(w).Encode(users)
+	json.NewEncoder(w).Encode(userResponse)
 }
 
 func (s *Server) HandleUpdate(w http.ResponseWriter, r *http.Request) {
 	userID := mux.Vars(r)["id"]
 
-	user, err := s.store.FindOne(context.Background(), userID)
+	err := checkAccessRight(userID, r)
 	if err != nil {
-		s.errLogger.Panicf("%v\n", err)
+		s.errLogger.Printf("%v\n", err)
+		handleError(w, http.StatusUnauthorized, err)
 		return
 	}
-	var payload *model.User
-	json.NewDecoder(r.Body).Decode(&payload)
 
-	update := buildUpdate(user, payload)
+	user, err := s.store.FindOne(context.Background(), userID)
+	if err != nil {
+		s.errLogger.Printf("%v\n", err)
+		handleError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	var req *model.User
+	json.NewDecoder(r.Body).Decode(&req)
+
+	update := buildUpdate(user, req)
 
 	err = s.store.Update(context.Background(), userID, update)
 	if err != nil {
 		s.errLogger.Panicf("%v\n", err)
+		handleError(w, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -114,7 +137,7 @@ func (s *Server) HandleUpdate(w http.ResponseWriter, r *http.Request) {
 	updatedUser, _ := s.store.FindOne(context.Background(), userID)
 
 	w.Header().Add("Content-type", "application/json")
-	json.NewEncoder(w).Encode(updatedUser)
+	json.NewEncoder(w).Encode(model.ToResponse(updatedUser))
 }
 
 func buildUpdate(old, new *model.User) *model.User {
@@ -177,9 +200,17 @@ func buildUpdate(old, new *model.User) *model.User {
 func (s *Server) HandleDelete(w http.ResponseWriter, r *http.Request) {
 	userID := mux.Vars(r)["id"]
 
-	err := s.store.DeleteOne(context.Background(), userID)
+	err := checkAccessRight(userID, r)
+	if err != nil {
+		s.errLogger.Printf("%v\n", err)
+		handleError(w, http.StatusUnauthorized, err)
+		return
+	}
+
+	err = s.store.DeleteOne(context.Background(), userID)
 	if err != nil {
 		s.errLogger.Panicf("%v\n", err)
+		handleError(w, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -190,6 +221,7 @@ func (s *Server) HandleDelete(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		s.errLogger.Panicf("%v\n", err)
+		handleError(w, http.StatusInternalServerError, err)
 		return
 	}
 }
