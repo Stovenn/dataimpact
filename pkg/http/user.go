@@ -2,6 +2,7 @@ package http
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"net/http"
 	"os"
@@ -10,14 +11,15 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/stovenn/dataimpact/internal/model"
 	"github.com/stovenn/dataimpact/pkg/bcrypt"
+	"github.com/stovenn/dataimpact/pkg/util"
 )
 
-const NB_WORKER = 4
-
 func (s *Server) HandleCreate(w http.ResponseWriter, r *http.Request) {
+	parentContext := context.Background()
+
 	file, err := os.Open("DataSet")
 	if err != nil {
-		s.errLogger.Printf("HandleCreate: %v", err)
+		s.errLogger.Printf("%v", err)
 		return
 	}
 	defer file.Close()
@@ -29,8 +31,8 @@ func (s *Server) HandleCreate(w http.ResponseWriter, r *http.Request) {
 		user := &model.User{}
 		d.Decode(user)
 
-		go func(u *model.User) {
-			found, _ := s.userStore.FindOne(u.ID)
+		go func(ctx context.Context, u *model.User) {
+			found, _ := s.store.FindOne(ctx, u.ID)
 			if found != nil {
 				s.infoLogger.Printf("user with id %s exists in database, skipping entry", u.ID)
 				return
@@ -41,8 +43,9 @@ func (s *Server) HandleCreate(w http.ResponseWriter, r *http.Request) {
 				s.errLogger.Panicf("%v\n", err)
 			}
 			user.Password = string(hash)
-			s.userStore.Create(u)
+			s.store.Create(ctx, u)
 
+			util.CreateDataDirIfNotExists()
 			workdirPath, _ := os.Getwd()
 			f, err := os.Create(path.Join(workdirPath, "data", u.ID))
 			if err != nil {
@@ -52,7 +55,7 @@ func (s *Server) HandleCreate(w http.ResponseWriter, r *http.Request) {
 			f.Write([]byte(u.Data))
 
 			s.infoLogger.Printf("created new user with id %s\n", u.ID)
-		}(user)
+		}(parentContext, user)
 	}
 	d.Token()
 }
@@ -60,7 +63,7 @@ func (s *Server) HandleCreate(w http.ResponseWriter, r *http.Request) {
 func (s *Server) HandlerGet(w http.ResponseWriter, r *http.Request) {
 	userID := mux.Vars(r)["id"]
 
-	user, err := s.userStore.FindOne(userID)
+	user, err := s.store.FindOne(context.Background(), userID)
 	if err != nil {
 		s.errLogger.Panicf("%v\n", err)
 	}

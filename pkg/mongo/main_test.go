@@ -2,6 +2,9 @@ package mongo
 
 import (
 	"context"
+	"fmt"
+	"os"
+	"testing"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -9,20 +12,9 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type mongoStore struct {
-	uri    string
-	dbName string
-	client *mongo.Client
-}
+var testStore *mongoStore
 
-var S *mongoStore
-
-const (
-	uri    = "mongodb://mongoadmin:secret@localhost:27017"
-	dbName = "dataimpact"
-)
-
-func InitMongoStore() {
+func TestMain(m *testing.M) {
 	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
 	opts := options.Client().ApplyURI(uri).SetServerAPIOptions(serverAPI)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -38,13 +30,13 @@ func InitMongoStore() {
 		panic(err)
 	}
 
-	S = &mongoStore{
+	testStore = &mongoStore{
 		uri:    uri,
 		dbName: dbName,
 		client: client,
 	}
-}
 
-func (s *mongoStore) Disconnect(ctx context.Context) error {
-	return s.client.Disconnect(ctx)
+	fmt.Printf("%+v", testStore)
+
+	os.Exit(m.Run())
 }

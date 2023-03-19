@@ -11,25 +11,23 @@ import (
 
 	"github.com/stovenn/dataimpact/pkg/http"
 	"github.com/stovenn/dataimpact/pkg/mongo"
+	"github.com/stovenn/dataimpact/pkg/util"
 )
 
 func main() {
-	if _, err := os.Stat("data/"); errors.Is(err, os.ErrNotExist) {
-		os.Mkdir("data", 0755)
-	}
+	util.CreateDataDirIfNotExists()
 
 	infoLogger := log.New(os.Stdin, "[INFO]", log.LstdFlags)
 	errLogger := log.New(os.Stderr, "[ERROR]", log.LstdFlags)
 
-	mongo.InitClient()
+	mongo.InitMongoStore()
 	defer func() {
-		if err := mongo.C.Disconnect(context.Background()); err != nil {
+		if err := mongo.S.Disconnect(context.Background()); err != nil {
 			panic(err)
 		}
 	}()
-	store := mongo.NewUserStore()
 
-	server := http.NewServer(store, infoLogger, errLogger)
+	server := http.NewServer(mongo.S, infoLogger, errLogger)
 
 	go func() {
 		fmt.Printf("Server listening on port 8080\n")

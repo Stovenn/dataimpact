@@ -1,8 +1,12 @@
 package internal
 
-import "github.com/stovenn/dataimpact/internal/model"
+import (
+	"context"
 
-type UserStore interface {
-	Create(user *model.User) error
-	FindOne(id string) (*model.User, error)
+	"github.com/stovenn/dataimpact/internal/model"
+)
+
+type Store interface {
+	Create(ctx context.Context, user *model.User) error
+	FindOne(ctx context.Context, id string) (*model.User, error)
 }

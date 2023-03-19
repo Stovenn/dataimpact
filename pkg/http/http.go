@@ -16,17 +16,17 @@ var (
 type Server struct {
 	infoLogger *log.Logger
 	errLogger  *log.Logger
-	userStore  internal.UserStore
+	store      internal.Store
 
 	*http.Server
 }
 
-func NewServer(us internal.UserStore, infoLogger, errLogger *log.Logger) *Server {
+func NewServer(us internal.Store, infoLogger, errLogger *log.Logger) *Server {
 	s := &Server{
 		infoLogger: infoLogger,
 		errLogger:  errLogger,
 
-		userStore: us,
+		store: us,
 		Server: &http.Server{
 			Addr:         ":8080",
 			ReadTimeout:  5 * time.Second,
