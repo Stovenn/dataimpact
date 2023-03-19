@@ -45,6 +45,25 @@ func (ms *mongoStore) Find(ctx context.Context) ([]*model.User, error) {
 	return users, nil
 }
 
+func (ms *mongoStore) Update(ctx context.Context, id string, user *model.User) error {
+	b, err := bson.Marshal(user)
+	if err != nil {
+		return err
+	}
+	var update bson.M
+	err = bson.Unmarshal(b, &update)
+	if err != nil {
+		return err
+	}
+
+	_, err = ms.userCollection().UpdateOne(ctx, bson.D{{Key: "_id", Value: id}}, bson.D{{Key: "$set", Value: update}})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (ms *mongoStore) DeleteOne(ctx context.Context, id string) error {
 	filter := bson.D{{Key: "_id", Value: id}}
 	_, err := ms.userCollection().DeleteOne(ctx, filter)

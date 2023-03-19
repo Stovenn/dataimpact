@@ -43,10 +43,10 @@ func (server *Server) setupRoutes() {
 	r := mux.NewRouter().PathPrefix("/api/v1").Subrouter()
 	userRouter := r.PathPrefix("/users").Subrouter()
 	userRouter.HandleFunc("/", server.HandleCreate).Methods(http.MethodPost)
-	userRouter.HandleFunc("/", nil).Methods(http.MethodGet)
-	userRouter.HandleFunc("/{id}", server.HandlerGet).Methods(http.MethodGet)
-	userRouter.HandleFunc("/{id}", nil).Methods(http.MethodPut)
-	userRouter.HandleFunc("/{id}", nil).Methods(http.MethodDelete)
+	userRouter.HandleFunc("/{id}", server.HandleGet).Methods(http.MethodGet)
+	userRouter.HandleFunc("/", server.HandleList).Methods(http.MethodGet)
+	userRouter.HandleFunc("/{id}", server.HandleUpdate).Methods(http.MethodPatch)
+	userRouter.HandleFunc("/{id}", server.HandleDelete).Methods(http.MethodDelete)
 
 	server.Handler = r
 }

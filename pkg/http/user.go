@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"os"
 	"path"
@@ -38,36 +39,185 @@ func (s *Server) HandleCreate(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			hash, err := bcrypt.HashPassword(u.Password)
+			hash, err := bcrypt.HashPassword(*u.Password)
 			if err != nil {
 				s.errLogger.Panicf("%v\n", err)
+				return
 			}
-			user.Password = string(hash)
-			s.store.Create(ctx, u)
+			*user.Password = string(hash)
 
-			util.CreateDataDirIfNotExists()
-			workdirPath, _ := os.Getwd()
-			f, err := os.Create(path.Join(workdirPath, "data", u.ID))
+			err = s.store.Create(ctx, u)
 			if err != nil {
 				s.errLogger.Panicf("%v\n", err)
+				return
 			}
-			defer f.Close()
-			f.Write([]byte(u.Data))
 
-			s.infoLogger.Printf("created new user with id %s\n", u.ID)
+			err = writeData(u.ID, *u.Data)
+			if err != nil {
+				s.errLogger.Panicf("%v\n", err)
+				return
+			}
+
+			s.infoLogger.Printf("successfully created user %s\n", u.ID)
 		}(parentContext, user)
 	}
 	d.Token()
 }
 
-func (s *Server) HandlerGet(w http.ResponseWriter, r *http.Request) {
+func (s *Server) HandleGet(w http.ResponseWriter, r *http.Request) {
 	userID := mux.Vars(r)["id"]
 
 	user, err := s.store.FindOne(context.Background(), userID)
 	if err != nil {
 		s.errLogger.Panicf("%v\n", err)
+		return
 	}
 
 	w.Header().Add("Content-type", "application/json")
 	json.NewEncoder(w).Encode(user)
+}
+
+func (s *Server) HandleList(w http.ResponseWriter, r *http.Request) {
+	users, err := s.store.Find(context.Background())
+	if err != nil {
+		s.errLogger.Panicf("%v\n", err)
+		return
+	}
+
+	w.Header().Add("Content-type", "application/json")
+	json.NewEncoder(w).Encode(users)
+}
+
+func (s *Server) HandleUpdate(w http.ResponseWriter, r *http.Request) {
+	userID := mux.Vars(r)["id"]
+
+	user, err := s.store.FindOne(context.Background(), userID)
+	if err != nil {
+		s.errLogger.Panicf("%v\n", err)
+		return
+	}
+	var payload *model.User
+	json.NewDecoder(r.Body).Decode(&payload)
+
+	update := buildUpdate(user, payload)
+
+	err = s.store.Update(context.Background(), userID, update)
+	if err != nil {
+		s.errLogger.Panicf("%v\n", err)
+		return
+	}
+
+	if update.Data != user.Data {
+		writeData(userID, *update.Data)
+	}
+
+	updatedUser, _ := s.store.FindOne(context.Background(), userID)
+
+	w.Header().Add("Content-type", "application/json")
+	json.NewEncoder(w).Encode(updatedUser)
+}
+
+func buildUpdate(old, new *model.User) *model.User {
+	update := *old
+	if new.Password != nil {
+		update.Password = new.Password
+	}
+	if new.IsActive != nil {
+		update.IsActive = new.IsActive
+	}
+	if new.Balance != nil {
+		update.Balance = new.Balance
+	}
+	if new.Age != nil {
+		update.Age = new.Age
+	}
+	if new.Name != nil {
+		update.Name = new.Name
+	}
+	if new.Gender != nil {
+		update.Gender = new.Gender
+	}
+	if new.Company != nil {
+		update.Company = new.Company
+	}
+	if new.Email != nil {
+		update.Email = new.Email
+	}
+	if new.Phone != nil {
+		update.Phone = new.Phone
+	}
+	if new.Address != nil {
+		update.Address = new.Address
+	}
+	if new.About != nil {
+		update.About = new.About
+	}
+	if new.Registered != nil {
+		update.Registered = new.Registered
+	}
+	if new.Latitude != nil {
+		update.Latitude = new.Latitude
+	}
+	if new.Longitude != nil {
+		update.Longitude = new.Longitude
+	}
+	if new.Tags != nil {
+		update.Tags = new.Tags
+	}
+	if new.Friends != nil {
+		update.Friends = new.Friends
+	}
+	if new.Data != nil {
+		update.Data = new.Data
+	}
+
+	return &update
+}
+
+func (s *Server) HandleDelete(w http.ResponseWriter, r *http.Request) {
+	userID := mux.Vars(r)["id"]
+
+	err := s.store.DeleteOne(context.Background(), userID)
+	if err != nil {
+		s.errLogger.Panicf("%v\n", err)
+		return
+	}
+
+	err = deleteData(userID)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			s.infoLogger.Printf("no file found for id %s", userID)
+			return
+		}
+		s.errLogger.Panicf("%v\n", err)
+		return
+	}
+}
+
+func writeData(id, data string) error {
+	util.CreateDataDirIfNotExists()
+	workdirPath, _ := os.Getwd()
+	f, err := os.Create(path.Join(workdirPath, "data", id))
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	f.Write([]byte(data))
+
+	return nil
+}
+
+func deleteData(id string) error {
+	workdirPath, _ := os.Getwd()
+	filePath := path.Join(workdirPath, "data", id)
+	_, err := os.Stat(filePath)
+	if err != nil {
+		return err
+	}
+	err = os.Remove(filePath)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -10,7 +10,8 @@ import (
 )
 
 func createUser(t *testing.T) *model.User {
-	user := &model.User{ID: util.RandomString(25), Name: util.RandomString(10)}
+	name := util.RandomString(10)
+	user := &model.User{ID: util.RandomString(25), Name: &name}
 	err := testStore.Create(context.Background(), user)
 	if err != nil {
 		t.Errorf("%v", err)
@@ -58,6 +59,7 @@ func TestFindAll(t *testing.T) {
 		t.Errorf("%v", err)
 	}
 }
+
 func TestDelete(t *testing.T) {
 	user := createUser(t)
 
