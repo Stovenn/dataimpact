@@ -40,10 +40,37 @@ func TestFindOne(t *testing.T) {
 			t.Errorf("%v", err)
 		}
 	})
-
 }
 
-func TestFindAll(t *testing.T) {
+func TestUpdate(t *testing.T) {
+	t.Run("should find existing user", func(t *testing.T) {
+		user := createUser(t)
+		newName := "new name"
+		update := &model.User{
+			ID:   user.ID,
+			Name: &newName,
+		}
+		err := testStore.Update(context.Background(), user.ID, update)
+		if err != nil {
+			t.Errorf("%v", err)
+		}
+
+		found, err := testStore.FindOne(context.Background(), user.ID)
+		if err != nil {
+			t.Errorf("%v", err)
+		}
+
+		if found.ID != user.ID {
+			t.Errorf("%v", err)
+		}
+
+		if found.Name == user.Name {
+			t.Errorf("%v", err)
+		}
+	})
+}
+
+func TestFind(t *testing.T) {
 	var users []*model.User
 	for i := 0; i < 5; i++ {
 		users = append(users, createUser(t))

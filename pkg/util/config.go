@@ -29,7 +29,7 @@ func SetupConfig(path string) (Config, error) {
 		return Config{}, fmt.Errorf("could not read from env file")
 	}
 
-	err = viper.Unmarshal(&config)
+	_ = viper.Unmarshal(&config)
 
 	return config, nil
 }

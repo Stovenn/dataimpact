@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -38,7 +39,7 @@ func NewServer(us internal.Store, infoLogger, errLogger *log.Logger, config util
 		store:      us,
 		config:     config,
 		Server: &http.Server{
-			Addr:         ":8080",
+			Addr:        	fmt.Sprintf(":%s", config.Port),
 			ReadTimeout:  5 * time.Second,
 			WriteTimeout: 10 * time.Second,
 			IdleTimeout:  90 * time.Second,

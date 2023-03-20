@@ -34,7 +34,7 @@ func main() {
 	server := http.NewServer(mongo.S, infoLogger, errLogger, config)
 
 	go func() {
-		fmt.Printf("Server listening on port 8080\n")
+		fmt.Printf("Server listening on port %s\n", config.Port)
 		err := server.ListenAndServe()
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			errLogger.Fatalf("an error occured on the server: %v", err)
