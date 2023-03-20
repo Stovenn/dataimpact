@@ -1,0 +1,7 @@
+POST http://localhost:8080/api/v1/login
+content-type: application/json
+
+{
+    "id": "BXQ6bO67tN23ZfgZ4kxrwivjlcJfdRxoIgRjcdLqTwr4pytl5owCa2ChUh4qDCJTK6Aeixvy0cB1AmoyrlSGn4GIm3rMH7VUl6mR",
+    "password": "wrongpassword"
+}

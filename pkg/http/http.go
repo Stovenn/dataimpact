@@ -52,7 +52,7 @@ func NewServer(us internal.Store, infoLogger, errLogger *log.Logger, config util
 func (server *Server) setupRoutes() {
 	r := mux.NewRouter().PathPrefix("/api/v1").Subrouter()
 	r.HandleFunc("/login", server.HandleLogin).Methods(http.MethodPost)
-	r.HandleFunc("/users", server.HandleCreate).Methods(http.MethodPost)
+	r.HandleFunc("/users/", server.HandleCreate).Methods(http.MethodPost)
 
 	userRouter := r.PathPrefix("/users").Subrouter()
 	userRouter.Use(authMiddleware(server.tokenMaker))

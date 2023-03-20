@@ -1,0 +1,14 @@
+PATCH http://localhost:8080/api/v1/users/BXQ6bO67tN23ZfgZ4kxrwivjlcJfdRxoIgRjcdLqTwr4pytl5owCa2ChUh4qDCJTK6Aeixvy0cB1AmoyrlSGn4GIm3rMH7VUl6mR
+Content-type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjhkMDVjZGM2LWU5MWUtNDgyZS04MTQ3LWRmYjc3N2UyNDcyMSIsInVzZXJfaWQiOiJCWFE2Yk82N3ROMjNaZmdaNGt4cndpdmpsY0pmZFJ4b0lnUmpjZExxVHdyNHB5dGw1b3dDYTJDaFVoNHFEQ0pUSzZBZWl4dnkwY0IxQW1veXJsU0duNEdJbTNyTUg3VlVsNm1SIiwiaXNzdWVkX2F0IjoiMjAyMy0wMy0yMFQxMDozMjo0MS44MDEwMjMrMDE6MDAiLCJleHBpcmVkX2F0IjoiMjAyMy0wMy0yMFQxMDo0Nzo0MS44MDEwMjQrMDE6MDAifQ.s0I7ms8-WeX7OWsHBUseJSwpuI5bWDZ5R8GXl-GWEIk
+
+{
+    "email": "jojo@gmail.com",
+    "age": 32,
+    "tags": ["foo", "bar", "baz"],
+    "friends": [
+        {"id": 7, "name":"Cristiano Ronaldo"},
+        {"id": 10, "name":"Lionel Messi"}
+    ],
+    "data": "new data"
+}
