@@ -10,7 +10,6 @@ Make sure you have docker installed on your machine, then clone the project and 
 
 ```shell
 $ docker compose up
-dataimpact-api-1 | Server listening on port 8080
 ```
 
 Once the app is launched you can either use the api through postman or with the "requests" folder that contains some usecases.  
@@ -29,8 +28,15 @@ This API provides the following endpoints:
 
 ### Session
 
-    POST http://localhost:8080/api/v1/login
+    POST http://localhost:8080/api/v1/login     // provides a JWT token to authenticate 
 
+Authetication request body:
+```json
+    {
+        "id": "your_user_id",
+        "password": "your_password"
+    }
+```
 ## Authentication
 
 To access this API, you need to authenticate yourself with a valid id and password. You can do this by sending a POST request to the /login endpoint with your credentials.
