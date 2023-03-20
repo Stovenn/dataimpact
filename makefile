@@ -19,4 +19,7 @@ test:
 mongo:
 	docker run -d --name mongo -e MONGO_INITDB_ROOT_USERNAME=mongoadmin -e MONGO_INITDB_ROOT_PASSWORD=secret -dp 27017:27017 mongo
 
+mock_mongo:
+	mockgen -package mockdb -destination pkg/mongo/mock/user.go github.com/stovenn/dataimpact/internal Store
+
 .PHONY: fmt lint vet build run test mongo

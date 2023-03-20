@@ -2,7 +2,6 @@ package mongo
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"testing"
@@ -42,8 +41,6 @@ func TestMain(m *testing.M) {
 		dbName: config.DBName,
 		client: client,
 	}
-
-	fmt.Printf("%+v", testStore)
 
 	os.Exit(m.Run())
 }

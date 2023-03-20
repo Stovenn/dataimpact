@@ -21,17 +21,17 @@ func main() {
 		log.Fatalf("cannot load config: %v\n", err)
 	}
 
-	infoLogger := log.New(os.Stdin, "[INFO]", log.LstdFlags)
-	errLogger := log.New(os.Stderr, "[ERROR]", log.LstdFlags)
-
-	mongo.InitMongoStore(config.DBUri, config.DBName)
+	store := mongo.InitMongoStore(config.DBUri, config.DBName)
 	defer func() {
-		if err := mongo.S.Disconnect(context.Background()); err != nil {
+		if err := store.Disconnect(context.Background()); err != nil {
 			panic(err)
 		}
 	}()
 
-	server := http.NewServer(mongo.S, infoLogger, errLogger, config)
+	infoLogger := log.New(os.Stdin, "[INFO]", log.LstdFlags)
+	errLogger := log.New(os.Stderr, "[ERROR]", log.LstdFlags)
+
+	server := http.NewServer(store, infoLogger, errLogger, config)
 
 	go func() {
 		fmt.Printf("Server listening on port %s\n", config.Port)
